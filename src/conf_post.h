@@ -58,6 +58,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #if NS_IMPL_GNUSTEP || defined __MINGW32__
 typedef unsigned int bool_bf;
 #else
+#include <stdbool.h> /* Clang in C mode does not automatically define bool unless you explicitly include that header */
 typedef bool bool_bf;
 #endif
 
