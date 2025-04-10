@@ -2251,9 +2251,10 @@ Like `cl-flet' but the definitions can refer to previous ones.
 (defmacro cl-labels (bindings &rest body)
   "Make local (recursive) function definitions.
 
-BINDINGS is a list of definitions of the form (FUNC ARGLIST BODY...)
-where FUNC is the function name, ARGLIST its arguments, and BODY the
-forms of the function body.
+Each definition can take the form (FUNC EXP) where FUNC is the function
+name, and EXP is an expression that returns the function value to which
+it should be bound, or it can take the more common form (FUNC ARGLIST
+BODY...) which is a shorthand for (FUNC (lambda ARGLIST BODY)).
 
 FUNC is defined in any BODY, as well as FORM, so you can write recursive
 and mutually recursive function definitions.  See Info node
@@ -2669,7 +2670,7 @@ Example:
 	 (let ((speed (assq (nth 1 (assq 'speed (cdr spec)))
 			    '((0 nil) (1 t) (2 t) (3 t))))
 	       (safety (assq (nth 1 (assq 'safety (cdr spec)))
-			     '((0 t) (1 t) (2 t) (3 nil)))))
+			     '((0 t) (1 nil) (2 nil) (3 nil)))))
 	   (if speed (setq cl--optimize-speed (car speed)
 			   byte-optimize (nth 1 speed)))
 	   (if safety (setq cl--optimize-safety (car safety)

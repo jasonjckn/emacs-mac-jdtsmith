@@ -245,8 +245,12 @@ STATES should be an object returned by `buffer-local-set-state'."
 
 (defmacro push (newelt place)
   "Add NEWELT to the list stored in the generalized variable PLACE.
+
 This is morally equivalent to (setf PLACE (cons NEWELT PLACE)),
-except that PLACE is evaluated only once (after NEWELT)."
+except that PLACE is evaluated only once (after NEWELT).
+
+For more information about generalized variables, see Info node
+`(elisp) Generalized Variables'."
   (declare (debug (form gv-place)))
   (if (symbolp place)
       ;; Important special case, to avoid triggering GV too early in
@@ -260,9 +264,13 @@ except that PLACE is evaluated only once (after NEWELT)."
 
 (defmacro pop (place)
   "Return the first element of PLACE's value, and remove it from the list.
+
 PLACE must be a generalized variable whose value is a list.
 If the value is nil, `pop' returns nil but does not actually
-change the list."
+change the list.
+
+For more information about generalized variables, see Info node
+`(elisp) Generalized Variables'."
   (declare (debug (gv-place)))
   ;; We use `car-safe' here instead of `car' because the behavior is the same
   ;; (if it's not a cons cell, the `cdr' would have signaled an error already),
@@ -3309,7 +3317,7 @@ miscellaneous values associated with the process."
 (defvar read-key-delay 0.01) ;Fast enough for 100Hz repeat rate, hopefully.
 
 (defun read-key (&optional prompt disable-fallbacks)
-  "Read a key from the keyboard.
+  "Read a key from the keyboard, return the event thus read.
 Contrary to `read-event' this will not return a raw event but instead will
 obey the input decoding and translations usually done by `read-key-sequence'.
 So escape sequences and keyboard encoding are taken into account.
@@ -3423,7 +3431,7 @@ with Emacs.  Do not call it directly in your own packages."
   "The default history for the `read-number' function.")
 
 (defun read-number (prompt &optional default hist)
-  "Read a numeric value in the minibuffer, prompting with PROMPT.
+  "Read from the minibuffer and return a numeric value, prompting with PROMPT.
 DEFAULT specifies a default value to return if the user just types RET.
 For historical reasons, the value of DEFAULT is always inserted into
 PROMPT, so it's recommended to use `format' instead of `format-prompt'
@@ -4585,6 +4593,7 @@ It also runs the string through `yank-transform-functions'."
 	 (param (or (nth 1 handler) string))
 	 (opoint (point))
 	 (inhibit-read-only inhibit-read-only)
+         (inhibit-modification-hooks inhibit-modification-hooks)
 	 end)
 
     ;; FIXME: This throws away any yank-undo-function set by previous calls
@@ -4595,9 +4604,10 @@ It also runs the string through `yank-transform-functions'."
       (insert param))
     (setq end (point))
 
-    ;; Prevent read-only properties from interfering with the
-    ;; following text property changes.
-    (setq inhibit-read-only t)
+    ;; Prevent read-only properties from interfering with the following
+    ;; text property changes, and inhibit further modification hook
+    ;; calls.
+    (setq inhibit-read-only t inhibit-modification-hooks t)
 
     (unless (nth 2 handler) ; NOEXCLUDE
       (remove-yank-excluded-properties opoint end))
@@ -7343,7 +7353,7 @@ not a list, return a one-element list containing OBJECT."
 The MESSAGE form will be evaluated immediately, but the resulting
 string will be displayed only if BODY takes longer than TIMEOUT seconds.
 
-\(fn (timeout message) &rest body)"
+\(fn (TIMEOUT MESSAGE) &rest BODY)"
   (declare (indent 1))
   `(funcall-with-delayed-message ,(car args) ,(cadr args)
                                  (lambda ()

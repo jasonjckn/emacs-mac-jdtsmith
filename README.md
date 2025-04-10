@@ -1,21 +1,19 @@
 # emacs-mac
 
-This is an experimental build of the [emacs-mac](https://bitbucket.org/mituharu/emacs-mac) (aka Carbon[^1] Emacs, Emacs-mac) port of emacs, updated for Emacs v30.1.  
+This is an experimental build of the [emacs-mac](https://bitbucket.org/mituharu/emacs-mac) (aka Carbon[^1] Emacs, Emacs-mac) port of emacs, updated for Emacs v30.1.
 
 > [!WARNING]
-> This is an experimental build of `emacs-mac`; there will certainly be bugs. We are looking for feedback and testing from experienced users.  If you are familiar with or willing to learn about running new builds of Emacs under a debugger, perfect.  If you are a Mac developer familiar with ObjC or Mac Window frameworks, even better!  Other users should stick to the official NS build or v29.1 emacs-mac release for now.
+> This is an experimental build of `emacs-mac`; there will certainly be bugs. We are looking for feedback and testing from experienced users.  If you are familiar with or willing to learn about running new builds of Emacs under a debugger, perfect.  If you are a Mac developer familiar with ObjC or Mac Window frameworks, even better!  Other users should stick to the official NS build or recent v29.4 emacs-mac release for now.
 
 ## Status
 
-Working well:
+Known working systems:
 
-- MacOS 15 (Sequoia) on ARM64 (M1, M2, M4)
+- MacOS 15 (Sequoia) on ARM64 (M1, M2, M4), X86_64 (Intel)
 - MacOS 14 (Sonoma) on ARM64 (M1, M3)
 - MacOS 12 (Monterey) on X86_64 (Intel)
 
-Compiling, running, with crash:
-
-- MacOS 12 (Monterey) on X86_64 (Intel)
+Please see the [issues](../../issues) for advice on build configurations for your system.
 
 >[!IMPORTANT]
 > Please open an [issue](../../issues) to report your experiences, even if you encounter no problems.  Mention your OS version, CPU, and any other relevant details.
@@ -26,14 +24,14 @@ See the `emacs-mac-30_1_exp` branch and the file `README-mac` for compile instru
 
 ```bash
 ./autogen.sh
-CFLAGS="-O3 -mcpu=native" ./configure --with-native-compilation --with-tree-sitter --with-rsvg --enable-mac-app=yes --without-imagemagic  # or whatever config options you use
+CFLAGS="-O3 -mcpu=native" ./configure --with-native-compilation --with-tree-sitter --enable-mac-app=yes  # or whatever config options you use
 make
-sudo make-install  # optional, compresses EL files and installs some resources in /usr/local/share/emacs/30.1.50
+sudo make install  # optional, compresses EL files and installs some resources in /usr/local/share/emacs/30.1.50
 ```
 
 You'll find the app under `mac`.
 
-Note that, as usual, you sometimes need to:
+If you choose not to `make install`, you may need to:
 
 ```
 ~/code/emacs/emacs-mac/mac
@@ -42,13 +40,26 @@ Note that, as usual, you sometimes need to:
 
 to associate the native lisp files.
 
+## Additions
+
+Additional features/fixes added on top of `emacs-mac` and Emacs proper:
+
+### Features
+
+- `New Frame` Dock Menu Item
+
+### Bug fixes
+
+- Take care to avoid crashes when selecting fonts from the system font panel.
+- Prevent zombie "Emacs Web Content" processes [on SVG load](../../issues/9), ~~restoring normal WebView SVG rendering for MacOS v14+~~.  Update: `WebView` is deprecated, so this has been reverted and another workaround installed. It's recommended to build with RSVG (it is enabled by default if the `librsvg2` library is found during build).
+
 ## Debugging
 
-If you get crashes or just want to help with debugging, it would be useful to run emacs under `lldb`.  Here's how:
+If you get crashes or just want to help with debugging, it would be very useful to run emacs under `lldb`, the clang debugger.  Here's how:
 
 1. Build emacs-mac with debug flags:
    ```
-    CFLAGS="-O0 -g3" ./configure --with-native-compilation --with-tree-sitter --with-rsvg --enable-mac-app=yes --without-imagemagick
+    CFLAGS="-O0 -g3" ./configure --with-native-compilation --with-tree-sitter --enable-mac-app=yes
     ```
 2.  In an `~/.lldbinit` file, add `settings set target.load-cwd-lldbinit true`, so Emacs can read the custom lldb commands it has defined.
 3.  Start the emacs binary from the `src/` directory, like:
@@ -59,12 +70,6 @@ If you get crashes or just want to help with debugging, it would be useful to ru
 1. Now cause your crash to occur, go `up` to the frame of interest, and use `xprint` on the potentially problematic variables.
 2. You can also try `gui` which is a little curses-based terminal GUI inside lldb (slow for me though).
 
-## Additions
-
-Additional features/fixes added on top of `emacs-mac` and Emacs proper:
-
-- `New Frame` Dock Menu Item
-- Take care to avoid crashes when selecting fonts from the system font panel.
 
 ## Notes
 

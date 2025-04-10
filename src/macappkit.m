@@ -1,5 +1,5 @@
 /* Functions for GUI implemented with Cocoa AppKit on macOS.
-   Copyright (C) 2008-2024  YAMAMOTO Mitsuharu
+   Copyright (C) 2008-2025  YAMAMOTO Mitsuharu
 
 This file is part of GNU Emacs Mac port.
 
@@ -10283,6 +10283,9 @@ mac_read_socket (struct terminal *terminal, struct input_event *hold_quit)
 - (void)showHourglass:(id)sender
 {
   if (hourglassWindow == nil
+      /* Adding a child window to an invisible one makes it
+	 appear.  */
+      && emacsWindow.isVisible
       /* Adding a child window to a window on an inactive space would
 	 cause space switching.  */
       && emacsWindow.isOnActiveSpace)
@@ -13673,7 +13676,7 @@ mac_osa_compile (Lisp_Object code_or_file, Lisp_Object compiled_p_or_language,
   if (script)
     {
       NSDictionaryOf (NSString *, id) *errorInfo;
-      NSData *compiledData = [script compiledDataForType:nil
+      NSData *compiledData = [script compiledDataForType:@""
 				     usingStorageOptions:OSANull
 						   error:&errorInfo];
 
@@ -14119,6 +14122,7 @@ static WebView *EmacsSVGDocumentLastWebView;
 			    forURLScheme:URL_FAKE_FILE_SCHEME];
       webView = [[WKWebView alloc] initWithFrame:frameRect
 				   configuration:configuration];
+      EmacsSVGDocumentLastWebView = webView;
       MRC_RELEASE (configuration);
 #else  /* !USE_WK_API */
       webView = [[WebView alloc] initWithFrame:frameRect frameName:nil
@@ -14128,7 +14132,6 @@ static WebView *EmacsSVGDocumentLastWebView;
   else
     {
       webView = EmacsSVGDocumentLastWebView;
-      EmacsSVGDocumentLastWebView = nil;
       webView.frame = frameRect;
     }
 
@@ -14301,22 +14304,6 @@ static WebView *EmacsSVGDocumentLastWebView;
   return self;
 }
 
-- (void)dealloc
-{
-  /* Deallocating WKWebView from a non-main thread causes crash on
-     macOS High Sierra and Mojave.  */
-  CFTypeRef lastWebView = CFBridgingRetain (EmacsSVGDocumentLastWebView);
-
-  MRC_RELEASE (EmacsSVGDocumentLastWebView);
-  EmacsSVGDocumentLastWebView = webView;
-  dispatch_async (dispatch_get_main_queue (), ^{
-      CFBridgingRelease (lastWebView);
-    });
-#if !USE_ARC
-  [super dealloc];
-#endif
-}
-
 + (BOOL)shouldInitializeInMainThread
 {
   return YES;
@@ -14371,9 +14358,9 @@ static WebView *EmacsSVGDocumentLastWebView;
 	    {
 	      NSString *colorInHex =
 		[NSString stringWithFormat:@"#%02x%02x%02x",
-			  (int) (components[0] * 255 + .5),
-			  (int) (components[1] * 255 + .5),
-			  (int) (components[2] * 255 + .5)];
+			  (unsigned int) (components[0] * 255 + .5),
+			  (unsigned int) (components[1] * 255 + .5),
+			  (unsigned int) (components[2] * 255 + .5)];
 
 	      if (colorInHex)
 		colorsInHex[key] = colorInHex;
